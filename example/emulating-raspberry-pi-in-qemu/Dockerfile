@@ -34,7 +34,8 @@ RUN OFFSET=$(fdisk -lu ${IMAGE_FILE} | awk '/^Sector size/ {sector_size=$4} /FAT
     echo "drive x: file=\"${IMAGE_FILE}\" offset=${OFFSET}" > ~/.mtoolsrc
 
 # Copy out the kernel and device tree
-RUN mcopy x:/bcm2710-rpi-3-b-plus.dtb . && \
+RUN mdir x:/ && \
+	mcopy x:/bcm2710-rpi-3-b-plus.dtb . && \
     mcopy x:/kernel8.img .
 
 # Set up SSH
