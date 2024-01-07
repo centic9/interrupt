@@ -8,10 +8,8 @@ RUN apt-get install -y qemu-system-aarch64 fdisk wget mtools xz-utils
 WORKDIR /qemu
 
 # Download the image
-# Note: Upgrading to bookworm did hang QEMU during startup, maybe the copying of kernel and device tree needs to be adjusted below
-# RUN wget --no-verbose https://downloads.raspberrypi.org/raspios_arm64/images/raspios_arm64-2023-12-06/2023-12-05-raspios-bookworm-arm64.img.xz
-RUN wget --no-verbose https://downloads.raspberrypi.org/raspios_lite_arm64/images/raspios_lite_arm64-2023-05-03/2023-05-03-raspios-bullseye-arm64-lite.img.xz
-ENV IMAGE_FILE=2023-05-03-raspios-bullseye-arm64-lite.img
+RUN wget --no-verbose https://downloads.raspberrypi.org/raspios_lite_arm64/images/raspios_lite_arm64-2023-12-11/2023-12-11-raspios-bookworm-arm64-lite.img.xz
+ENV IMAGE_FILE=2023-12-11-raspios-bookworm-arm64-lite.img
 
 # Uncompress the image
 RUN xz -d ${IMAGE_FILE}.xz
