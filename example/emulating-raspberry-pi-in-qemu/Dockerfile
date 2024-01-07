@@ -1,4 +1,4 @@
-FROM ubuntu:20.04@sha256:ca5534a51dd04bbcebe9b23ba05f389466cf0c190f1f8f182d7eea92a9671d00
+FROM ubuntu:22.04@sha256:ca5534a51dd04bbcebe9b23ba05f389466cf0c190f1f8f182d7eea92a9671d00
 
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -8,7 +8,9 @@ RUN apt-get install -y qemu-system-aarch64 fdisk wget mtools xz-utils
 WORKDIR /qemu
 
 # Download the image
-RUN wget https://downloads.raspberrypi.org/raspios_arm64/images/raspios_arm64-2023-05-03/2023-05-03-raspios-bullseye-arm64.img.xz
+# Note: Upgrading to bookworm did hang QEMU during startup, maybe the copying of kernel and device tree needs to be adjusted below
+# RUN wget --no-verbose https://downloads.raspberrypi.org/raspios_arm64/images/raspios_arm64-2023-12-06/2023-12-05-raspios-bookworm-arm64.img.xz
+RUN wget --no-verbose https://downloads.raspberrypi.org/raspios_arm64/images/raspios_arm64-2023-05-03/2023-05-03-raspios-bullseye-arm64.img.xz
 ENV IMAGE_FILE=2023-05-03-raspios-bullseye-arm64.img
 
 # Uncompress the image
@@ -47,7 +49,24 @@ RUN mkdir -p /tmp && \
 RUN mcopy /tmp/ssh x:/ && \
     mcopy /tmp/userconf x:/
 
+# Remove some unnecessary packages and remove some unnecessary files to reduce size of docker image
+RUN apt-get -y purge qemu-system-gui libxrender1 gsettings-desktop-schemas adwaita-icon-theme gtk-update-icon-cache hicolor-icon-theme humanity-icon-theme \
+	&& apt-get -y clean autoclean \
+	&& apt-get -y autoremove \
+	&& rm -rf /var/lib/{apt,dpkg,cache,log}/ \
+
 EXPOSE 2222
 
 # Start qemu with SSH port forwarding
-ENTRYPOINT qemu-system-aarch64 -machine raspi3b -cpu cortex-a72 -nographic -dtb bcm2710-rpi-3-b-plus.dtb -m 1G -smp 4 -kernel kernel8.img -sd ${IMAGE_FILE} -append "rw earlyprintk loglevel=8 console=ttyAMA0,115200 dwc_otg.lpm_enable=0 root=/dev/mmcblk0p2 rootdelay=1" -device usb-net,netdev=net0 -netdev user,id=net0,hostfwd=tcp::2222-:22
+ENTRYPOINT qemu-system-aarch64 \
+	-machine raspi3b \
+	-cpu cortex-a72 \
+	-nographic \
+	-dtb bcm2710-rpi-3-b-plus.dtb \
+	-m 1G \
+	-smp 4 \
+	-kernel kernel8.img \
+	-sd ${IMAGE_FILE} \
+	-append "rw earlyprintk loglevel=8 console=ttyAMA0,115200 dwc_otg.lpm_enable=0 root=/dev/mmcblk0p2 rootdelay=1" \
+	-device usb-net,netdev=net0 \
+	-netdev user,id=net0,hostfwd=tcp::2222-:22
